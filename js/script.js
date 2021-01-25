@@ -22,13 +22,18 @@ class Contacts {
         const user = new User(name, email, address, phone);
         const myUser = user.get;
         this.users.push({id: this.users.length, ...myUser});
+
+        window.localStorage.setItem('key', JSON.stringify(this.users)); 
     }
 
     edit(id, name, email, address, phone){
-       this.users[id].name = name;
-       this.users[id].email = email;
-       this.users[id].address = address;
-       this.users[id].phone = phone;  
+        this.users[id].name = name;
+        this.users[id].email = email;
+        this.users[id].address = address;
+        this.users[id].phone = phone;
+       
+        window.localStorage.setItem('key', JSON.stringify(this.users)); // почему когда вставляем  this.users[id] при редактировании переписывается массив и отображается только 1 новое значение
+        document.cookie = "user=" + "Egor" + ";max-age=" + (3600 * 24 * 10);     // не добавляются куки файлы  
     }
 
     remove(id) {
@@ -55,9 +60,10 @@ class ContactsApp extends Contacts{
             <input id="todoInputPhone" type="text" class = "todo-input" placeholder="Введите номер телефона">
             <div class="button-conteiner">
                 <button id="todoButtonAdd" type="submit" class="todo-button">Add</button>
-                
+                <button id="allContacts" type="button" class="todo-button">all contacts</button>
             </div>
         `;
+               
         form.addEventListener('submit', (event) => {
             const self = this;
             event.preventDefault();
@@ -65,16 +71,33 @@ class ContactsApp extends Contacts{
             const email = event.currentTarget[1].value;
             const address = event.currentTarget[2].value;
             const phone = event.currentTarget[3].value;
+           
             event.currentTarget[0].value = event.currentTarget[1].value = event.currentTarget[2].value = event.currentTarget[3].value = '';
+
+            if(name.length == 0 || email.length == 0 || address.length == 0 || phone.length == 0) return;
+
             self.add(name, email, address, phone);  // зачем добавлять self вместо this
 
-        if(document.getElementById('contactsBlock')) {
-            document.getElementById('contactsBlock').remove();
-            console.log(document.getElementById('contactsBlock'));
-        }
-            this.displayContacts();
-        
+            debugger
+
+            if(document.getElementById('contactsBlock')) {
+                document.getElementById('contactsBlock').remove();
+                // console.log(document.getElementById('contactsBlock'));
+            }           
+
+            this.displayContacts();        
         });
+
+        const allContacts = form.querySelector('#allContacts');
+        allContacts.addEventListener('click', (event) => {
+            const contactList = window.localStorage.getItem('key');
+            const contactListData = JSON.parse(contactList);
+                       
+            for (let i=0; i<contactListData.length; i++) {
+                console.log(contactListData[i]);
+            }
+        });
+
         document.body.appendChild(form);
     }
 
@@ -88,11 +111,14 @@ class ContactsApp extends Contacts{
         const inputEmail = document.createElement('input');
         const inputAddress = document.createElement('input');
         const inputPhone = document.createElement('input');
-                
+         
+       
         inputName.value = name;   
         inputEmail.value = email;       
         inputAddress.value = address;     
         inputPhone.value = phone;
+        
+        
         
         editForm.appendChild(inputName);
         editForm.appendChild(inputEmail);
@@ -109,14 +135,9 @@ class ContactsApp extends Contacts{
             let newId = +CONTACT_ID.replace('_', '');
             this.edit(newId, inputName.value, inputEmail.value, inputAddress.value, inputPhone.value);
 
-            if(document.getElementById(CONTACT_ID)) {
-                document.getElementById(CONTACT_ID).remove();
-                document.getElementById('contactsBlock').querySelector('button').remove();
-                document.getElementById('contactsBlock').querySelector('button').remove();
-            } 
+            document.getElementById('contactsBlock').remove();          
 
-           this.displayContacts();
-           
+           this.displayContacts();           
         });      
     }   
 
@@ -140,9 +161,9 @@ class ContactsApp extends Contacts{
             remove.innerHTML = 'delete';
             remove.classList.add('todo-button');
             remove.addEventListener('click', () => {
-                self.remove(user.id);
+                self.remove(user.id);               
+                document.getElementById('contactsBlock').remove();
                 this.displayContacts();
-                debugger
             });
 
             contactsBlock.appendChild(remove);
@@ -150,8 +171,13 @@ class ContactsApp extends Contacts{
             const edit = document.createElement('button');
             edit.innerHTML = 'edit';
             edit.classList.add('todo-button');
-            edit.addEventListener('click', () => {
-                this.editModalWindow(CONTACT_ID, user);
+            edit.addEventListener('click', () => {                
+                this.editModalWindow(CONTACT_ID, user);  
+                // (_ => {
+                //     window.addEventListener('load', _ => {               
+                //     document.cookie = 'user=bob';
+                //     });
+                // })();               
             });
 
             contactsBlock.appendChild(edit);
@@ -174,26 +200,40 @@ app.display();
 
 //     window.addEventListener('load', _ => {
 
-//         // document.cookie = 'user=Alex';
-//         // document.cookie = 'login=user-alex';
+//         document.cookie = 'user=Alex';
+//         document.cookie = 'login=user-alex';
 
-//         // document.cookie = 'user=Bob';
-//         // document.cookie = 'info=' + encodeURIComponent('Далеко-далеко за горами!');
+//         document.cookie = 'user=Bob';
+//         document.cookie = 'info=' + encodeURIComponent('Далеко-далеко за горами!');
 
-//         // console.log(decodeURIComponent('%D0%94%D0%B0%D0%BB%D0%B5%D0%BA%D0%BE-%D0%B4%D0%B0%D0%BB%D0%B5%D0%BA%D0%BE%20%D0%B7%D0%B0%20%D0%B3%D0%BE%D1%80%D0%B0%D0%BC%D0%B8!'));
+//         console.log(decodeURIComponent('%D0%94%D0%B0%D0%BB%D0%B5%D0%BA%D0%BE-%D0%B4%D0%B0%D0%BB%D0%B5%D0%BA%D0%BE%20%D0%B7%D0%B0%20%D0%B3%D0%BE%D1%80%D0%B0%D0%BC%D0%B8!'));
 
-//         // document.cookie = 'user2=Peter; path=/news/post/post1';
-//         // document.cookie = 'user3=Mike; domain=127.0.0.1';
+//         document.cookie = 'user2=Peter; path=/news/post/post1';
+//         document.cookie = 'user3=Mike; domain=127.0.0.1';
 
-//         // let date = new Date(Date.now() + 20000);
-//         // date = date.toUTCString();
+//         let date = new Date(Date.now() + 20000);
+//         date = date.toUTCString();
 
-//         // // document.cookie = 'user4=Bill; expires=' +date;
+//         // document.cookie = 'user4=Bill; expires=' +date;
 
-//         // // document.cookie = 'user5=Gates; max-age=20';
-//         // document.cookie = 'user6=Alex; secure';
+//         // document.cookie = 'user5=Gates; max-age=20';
+//         document.cookie = 'user6=Alex; secure';
 
-//         // console.log(document.cookie);  
+//         console.log(document.cookie);  
+
+//         window.localStorage.setItem('user', 'bob');
 
 //     });
 // })();
+
+// window.localStorage('user', 'bob');
+
+/*sessionStorage && localStorage */
+
+/*
+setItem()
+getItem()
+removeItem()
+clear()
+length 
+*/
