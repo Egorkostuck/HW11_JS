@@ -15,29 +15,61 @@ class User {
 
 class Contacts {
     constructor() {
-        this.users = [];
+        this.users = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : [];
+    }
+
+    async checkUserData() {
+        if (!localStorage.getItem('key')) {
+
+            const response = await fetch('https://jsonplaceholder.typicode.com/users');
+            const result = await response.json();
+
+            this.users = await result;
+            // debugger
+            localStorage.setItem('key', JSON.stringify(this.users));
+        }
     }
 
     add(name, email, address, phone) {
         const user = new User(name, email, address, phone);
         const myUser = user.get;
+        // document.cookie = 'user=Bob';
+        
+        // function setCookie(username, name, options = {}) {
+        //     options = {
+        //         path: '/',
+               
+        //         ...options
+        //     };
+        //     document.cookie = username + "=" + name + ";" + ";path=/";
+        // }
+        
+        // setCookie("username", user.data.name, {secure: true, 'max-age': 3600});
+        
         this.users.push({id: this.users.length, ...myUser});
 
-        window.localStorage.setItem('key', JSON.stringify(this.users)); 
+        this.users.forEach(users => {
+            let newAddress = JSON.stringify(users.address);
+            users.address = newAddress;
+        });
+
+        
+        window.localStorage.setItem('key', JSON.stringify(this.users));        
     }
 
     edit(id, name, email, address, phone){
-        this.users[id].name = name;
-        this.users[id].email = email;
-        this.users[id].address = address;
-        this.users[id].phone = phone;
+        this.users[id-1].name = name;
+        this.users[id-1].email = email;
+        this.users[id-1].address = address;
+        this.users[id-1].phone = phone;
        
         window.localStorage.setItem('key', JSON.stringify(this.users)); // почему когда вставляем  this.users[id] при редактировании переписывается массив и отображается только 1 новое значение
-        document.cookie = "user=" + "Egor" + ";max-age=" + (3600 * 24 * 10);     // не добавляются куки файлы  
+        // document.cookie = "user=" + "Egor" + ";max-age=" + (3600 * 24 * 10);     // не добавляются куки файлы  
     }
 
     remove(id) {
-        delete this.users[id];
+        delete this.users[id-1];
+        localStorage.removeItem(this.users[id]);
     }
 
     get get() {
@@ -99,6 +131,7 @@ class ContactsApp extends Contacts{
         });
 
         document.body.appendChild(form);
+        this.displayContacts();
     }
 
     editModalWindow( CONTACT_ID, userData ) {
@@ -142,14 +175,18 @@ class ContactsApp extends Contacts{
     }   
 
     displayContacts() {
+
+        this.checkUserData();
         const users = this.get;
         const self = this;
 
         const contactsBlock = document.createElement('div');
         contactsBlock.id = 'contactsBlock';
         users.map(user => {
+            
             const contact = document.createElement('div');
-            const CONTACT_ID ='_' + user.id;
+            const CONTACT_ID ='_' + user.id+1;
+            debugger
             contact.id = CONTACT_ID;
             contact.innerHTML = `
                 name: ${user.name} <br>
@@ -172,12 +209,7 @@ class ContactsApp extends Contacts{
             edit.innerHTML = 'edit';
             edit.classList.add('todo-button');
             edit.addEventListener('click', () => {                
-                this.editModalWindow(CONTACT_ID, user);  
-                // (_ => {
-                //     window.addEventListener('load', _ => {               
-                //     document.cookie = 'user=bob';
-                //     });
-                // })();               
+                this.editModalWindow(CONTACT_ID, user);        
             });
 
             contactsBlock.appendChild(edit);
